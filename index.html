@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Catcher</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+      darkMode: 'class',
+    };
+  </script>
+  <style>
+    .toggle-button {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 50;
+      padding: 0.5rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 0.375rem;
+      background-color: white;
+      color: #1a1a1a;
+      font-size: 0.875rem;
+    }
+    .dark .toggle-button {
+      background-color: #1a1a1a;
+      color: white;
+      border-color: #666;
+    }
+  </style>
+</head>
+<body class="bg-white text-black dark:bg-gray-900 dark:text-white font-sans min-h-screen flex flex-col items-center p-6 transition-colors duration-300">
+  <button id="theme-toggle" class="toggle-button">🌙</button>
+  <main class="w-full max-w-2xl">
+    <h1 class="text-3xl font-bold text-center mb-4">Client Catcher</h1>
+    <p class="text-center mb-6">Write better proposals. Win more gigs.</p>
+
+    <label class="block mb-2 font-semibold">Job Title</label>
+    <input id="jobTitle" type="text" class="w-full p-2 mb-4 border rounded dark:bg-gray-800" placeholder="e.g. Logo Designer" />
+
+    <label class="block mb-2 font-semibold">Top 3 Skills</label>
+    <input id="skills" type="text" class="w-full p-2 mb-4 border rounded dark:bg-gray-800" placeholder="e.g. Adobe Illustrator, Branding, UX" />
+
+    <button id="generate" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4">Generate Proposal</button>
+
+    <div id="output" class="p-4 bg-gray-100 dark:bg-gray-800 rounded whitespace-pre-line"></div>
+  </main>
+
+  <script>
+    const toggleBtn = document.getElementById('theme-toggle');
+    toggleBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    const generateBtn = document.getElementById('generate');
+    const output = document.getElementById('output');
+
+    generateBtn.addEventListener('click', async () => {
+      const job = document.getElementById('jobTitle').value;
+      const skills = document.getElementById('skills').value;
+
+      if (!job || !skills) {
+        output.textContent = 'Please fill in all fields.';
+        return;
+      }
+
+      output.textContent = 'Generating...';
+
+      const res = await fetch('/api/generate-proposal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ job, skills })
+      });
+
+      const data = await res.json();
+      output.textContent = data.proposal || 'Failed to generate proposal.';
+    });
+  </script>
+</body>
+</html>
