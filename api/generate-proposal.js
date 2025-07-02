@@ -1,43 +1,38 @@
-// File: api/generate-proposal.js
-
+// /api/generate-proposal.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST requests allowed' });
+    return res.status(405).json({ message: 'Only POST requests allowed' });
   }
 
   const { job, skills } = req.body;
 
   if (!job || !skills) {
-    return res.status(400).json({ error: 'Missing job or skills' });
+    return res.status(400).json({ message: 'Missing job title or skills' });
   }
 
-  const prompt = `Write a short, persuasive freelance proposal for the following job:\n\nJob Title: ${job}\nSkills: ${skills}\n\nFocus on pain points and how the freelancer can deliver value.`;
-
   try {
-    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    const prompt = `Write a short, compelling freelance proposal for a ${job}. Highlight the following skills: ${skills}. Include a client pain point and how you solve it.`;
+
+    const apiRes = await fetch('https://api.openai.com/v1/completions', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 300,
-        temperature: 0.7
+        model: 'text-davinci-003',
+        prompt,
+        max_tokens: 200,
+        temperature: 0.7,
       })
     });
 
-    const data = await openaiRes.json();
+    const data = await apiRes.json();
+    const text = data.choices?.[0]?.text?.trim();
 
-    if (data.choices?.[0]?.message?.content) {
-      res.status(200).json({ proposal: data.choices[0].message.content.trim() });
-    } else {
-      res.status(500).json({ error: 'OpenAI failed to return a proposal.' });
-    }
-
+    res.status(200).json({ proposal: text });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Something went wrong.' });
+    console.error('API Error:', err);
+    res.status(500).json({ message: 'Failed to generate proposal.' });
   }
 }
