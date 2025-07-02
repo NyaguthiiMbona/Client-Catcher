@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const completion = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -21,19 +21,25 @@ export default async function handler(req, res) {
           },
           {
             role: "user",
-            content: `Write a short and compelling freelance proposal for a ${job}. My skills include: ${skills}.`
+            content: `Write a freelance proposal for a ${job}. My skills include: ${skills}.`
           }
         ],
         temperature: 0.7
       })
     });
 
-    const data = await completion.json();
-    const proposal = data.choices?.[0]?.message?.content || "Proposal could not be generated.";
+    const data = await response.json();
+    console.log("OpenAI response:", data);
 
+    if (!data.choices || !data.choices.length) {
+      return res.status(500).json({ error: 'OpenAI did not return choices.', raw: data });
+    }
+
+    const proposal = data.choices[0].message.content;
     res.status(200).json({ proposal });
+
   } catch (error) {
-    console.error("Error generating proposal:", error);
-    res.status(500).json({ error: 'Failed to generate proposal.' });
+    console.error("API error:", error);
+    res.status(500).json({ error: 'Failed to generate proposal.', details: error.message });
   }
 }
